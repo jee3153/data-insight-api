@@ -1,0 +1,65 @@
+import express from "express";
+import { Request, Response } from "express";
+import fileUpload from "express-fileupload";
+import { analyzeDataset } from "./lib/analyzer";
+import { loadAnalysisOf, saveFile, loadResults } from "./repository";
+import { Status, UploadRequest } from "./types/analyzerTypes";
+import { PrismaClient } from "../generated/prisma";
+
+const defaultClient = new PrismaClient({
+    datasources: {
+        db: {
+            url: (process.env.DATABASE_URL) || "5432"
+        }
+    }
+})
+
+export const createApp = (client: PrismaClient = defaultClient) => {
+    const app = express()
+
+    app.use(express.urlencoded({ extended: true }));
+    app.use(fileUpload());
+
+    app.post("/upload", async (req, res) => {
+        try {
+            const uploadReq = req as UploadRequest
+            if (!uploadReq || !uploadReq.files || !uploadReq.files.file) {
+                return res.status(400).send("No file uploaded.")
+            }
+            console.log("Received userId:", req.body.userId || req.query.userId);
+            const file = uploadReq.files.file
+
+            if (Array.isArray(file)) {
+                return res.status(400).send("Multiple files not supported")
+            }
+            const text = file.data.toString()
+            const summary = analyzeDataset(text)
+            const saved = await saveFile(client, file.name, uploadReq.body.userId, summary)
+
+            res.status(200).send({ id: saved.id, preview: summary })
+        } catch (e) {
+            console.error(e)
+            return res.status(500).send({ error: "Something went wrong uploading the file." })
+        }
+
+    })
+
+    app.get("/analysis/:id", async (req, res) => {
+        const { id } = req.params
+        const analysis = await loadAnalysisOf(client, id)
+        if (!analysis) {
+            return res.status(400).send({ message: `id ${id} doesn't exist.` })
+        }
+        return res.status(200).send({ analysis })
+    })
+
+    app.get("/results", async (req, res) => {
+        const { results, status, message } = await loadResults(client, req.query)
+        if (status === Status.FAIL) {
+            res.status(400).send(message)
+        }
+        res.status(200).send({ results })
+    })
+
+    return app
+}
