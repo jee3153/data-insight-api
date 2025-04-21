@@ -1,7 +1,7 @@
 import request from 'supertest'
 import { createApp } from '../../src/app'
 import { Express } from 'express'
-import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { Prisma, PrismaClient } from '../../generated/prisma'
 import { cleanupDatabase, closeAllConnection, startPostgresContainer } from '../setupTestDB'
 import { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
@@ -196,6 +196,5 @@ async function persistData(client: PrismaClient, analysisList: Prisma.InputJsonV
         })
         i++
     }
-    console.log("persist")
 }
 

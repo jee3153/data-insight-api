@@ -1,0 +1,43 @@
+name: Data Insight API CI Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ""
+      TESTCONTAINERS_RYUK_DISABLED: true
+      PORT: "6530"
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        
+    - name: Install dependencies
+      run: npm ci  
+    
+    - name: Generate Prisma Client
+      run: npx prisma generate
+
+    - name: Run vitest + testcontainer
+      run: npx vitest run --reporter verbose | tee vitest-report.txt  
+
+    - name: Run vitest and upload test report
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: vitest-report
+        path: vitest-report.txt  
+      

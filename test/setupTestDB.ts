@@ -1,7 +1,6 @@
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import { execSync } from 'child_process'
 import { PrismaClient } from "../generated/prisma";
-import { Client } from 'pg'
 
 type TestContainerSetup = {
     container: StartedPostgreSqlContainer,
@@ -19,10 +18,8 @@ export async function startPostgresContainer(): Promise<TestContainerSetup> {
         .withDatabase(database)
         .start()
     const connectionUrl = container.getConnectionUri()
-    // const client = new Client({ connectionString: container.getConnectionUri() })
-    // await client.connect()
-    // await createAnalysisTable(client)
-    console.log(`container connectionURl: ${connectionUrl}`)
+
+    console.log(`postgres container started on: ${container.getHost()}:${container.getPort()}`)
     process.env.DATABASE_URL = connectionUrl
     process.env.PORT = "6530"
 
@@ -44,12 +41,6 @@ export async function startPostgresContainer(): Promise<TestContainerSetup> {
     console.log("database setup complete")
 
     return { container, client }
-}
-
-export async function createAnalysisTable(client: Client) {
-    const CREATE_TABLE = "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";CREATE TABLE \"Analysis\" (id text primary key default uuid_generate_v4(), filename text, result JSON, user_id text, createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)"
-    await client.query(CREATE_TABLE)
-    console.log("table 'Analysis' created.")
 }
 
 export async function cleanupDatabase(client: PrismaClient) {
