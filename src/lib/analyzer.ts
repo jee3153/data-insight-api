@@ -2,7 +2,6 @@ import { parse } from "csv-parse/sync";
 import { Summary } from '../types/analyzerTypes'
 
 export function analyzeDataset(cvsText: string): Summary {
-    console.log(cvsText)
     const summary: Summary = { columns: {} }
 
     try {

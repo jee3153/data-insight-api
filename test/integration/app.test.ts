@@ -6,30 +6,7 @@ import { Prisma, PrismaClient } from '../../generated/prisma'
 import { cleanupDatabase, closeAllConnection, startPostgresContainer } from '../setupTestDB'
 import { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import { randomUUID } from 'crypto'
-
-const csvPath = `${process.cwd()}/integrationTest/fixtures`
-
-describe("Test post requests of an app", () => {
-    const app = createApp()
-    it("should be successful when posting valid csv", async () => {
-        const res = await request(app)
-            .post("/upload")
-            .field("userId", "user321")
-            .attach("file", `${csvPath}/Boston.csv`)
-            .expect(200)
-
-        expect(res.body?.preview?.columns[""]).toEqual({ "type": "number", "missing": 0, "unique": 506, "suggest_chart": "histogram" })
-    })
-
-    it("should fail when posting invalid csv", async () => {
-        const res = await request(app)
-            .post("/upload")
-            .field("userId", "user321")
-            .attach("file", `${csvPath}/invalid.csv`)
-            .expect(500)
-        expect(res.body.error).toBe("Something went wrong uploading the file.")
-    })
-})
+import path from 'path'
 
 describe("Test get requests of an app", () => {
     let client: PrismaClient
@@ -47,6 +24,25 @@ describe("Test get requests of an app", () => {
 
     afterAll(async () => {
         await closeAllConnection({ container, client })
+    })
+
+    it("should be successful when posting valid csv", async () => {
+        const res = await request(app)
+            .post("/upload")
+            .field("userId", "user321")
+            .attach("file", path.join(process.cwd(), "test", "integration", "fixtures", "Boston.csv"))
+            .expect(200)
+
+        expect(res.body?.preview?.columns[""]).toEqual({ "type": "number", "missing": 0, "unique": 506, "suggest_chart": "histogram" })
+    })
+
+    it("should fail when posting invalid csv", async () => {
+        const res = await request(app)
+            .post("/upload")
+            .field("userId", "user321")
+            .attach("file", path.join(process.cwd(), "test", "integration", "fixtures", "invalid.csv"))
+            .expect(500)
+        expect(res.body.error).toBe("Something went wrong uploading the file.")
     })
 
     it("should return analysis when request with id param of analysis id", async () => {
