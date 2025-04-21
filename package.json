@@ -22,7 +22,6 @@
     "@types/supertest": "^6.0.3",
     "child-process": "^1.0.2",
     "dotenv": "^16.5.0",
-    "pg": "^8.14.1",
     "prisma": "^6.6.0",
     "supertest": "^7.1.0",
     "testcontainers": "^10.24.2",
